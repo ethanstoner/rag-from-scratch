@@ -47,6 +47,16 @@ def run_technique(tech, queries: list[Query], out: Path, log=print) -> list[dict
     rows = [json.loads(ln) for ln in out.read_text(encoding="utf-8").splitlines()] if out.exists() else []
     done = {r["id"] for r in rows}
     todo = [q for q in queries if q.id not in done]
+    if todo:
+        tech.llm.reset_counters()
+        t0 = time.perf_counter()
+        tech.prepare()
+        wall = time.perf_counter() - t0
+        index_cost = {"llm_calls": tech.llm.calls,
+                      "seconds": wall - tech.llm.real_seconds + tech.llm.model_seconds}
+        if index_cost["llm_calls"] or index_cost["seconds"] > 1:
+            out.with_suffix(".index.json").write_text(json.dumps(index_cost), encoding="utf-8")
+            log(f"  {tech.name}: index built with {index_cost['llm_calls']} LLM calls in {index_cost['seconds']:.0f}s")
     t0 = time.perf_counter()
     with out.open("a", encoding="utf-8") as f:
         for i, q in enumerate(todo, 1):

@@ -39,6 +39,9 @@ class Technique:
         self.llm = kit.llm
         self.trace: dict = {}
 
+    def prepare(self):
+        """Build any extra index. Runs before timing starts; its cost is reported separately."""
+
     def retrieve(self, question: str) -> list[Chunk]:
         raise NotImplementedError
 

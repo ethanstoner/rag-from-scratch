@@ -11,18 +11,18 @@
   "baseline": {
    "n": 20,
    "em": [
-    0.55,
-    0.35,
-    0.75
+    0.5,
+    0.3,
+    0.7
    ],
    "em_by_type": {
     "inference_query": 0.2,
-    "comparison_query": 0.6,
+    "comparison_query": 0.4,
     "temporal_query": 0.4,
     "null_query": 1.0
    },
-   "f1": 0.55,
-   "false_refusal": 0.4,
+   "f1": 0.5,
+   "false_refusal": 0.3333333333333333,
    "null_refusal": 1.0,
    "evidence_recall": [
     0.5055555555555555,
@@ -33,7 +33,7 @@
    "mrr": 0.4527777777777778,
    "doc_recall": 0.7055555555555556,
    "llm_calls": 1.0,
-   "latency_median_s": 0.5785787000002074,
+   "latency_median_s": 0.37114950000000135,
    "context_chars": 6773.35,
    "errors": 0
   },
@@ -62,18 +62,369 @@
    "mrr": 0.6661111111111111,
    "doc_recall": 0.788888888888889,
    "llm_calls": 1.0,
-   "latency_median_s": 0.40882970000006935,
+   "latency_median_s": 0.3939989499999683,
    "context_chars": 6917.85,
    "errors": 0,
    "em_vs_baseline": [
-    0.1,
-    -0.1,
-    0.3
+    0.15,
+    -0.05,
+    0.35
    ],
    "recall_vs_baseline": [
     0.15555555555555556,
     0.03333333333333333,
     0.3111111111111111
+   ]
+  },
+  "multi_query": {
+   "n": 20,
+   "em": [
+    0.55,
+    0.35,
+    0.75
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.6,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.55,
+   "false_refusal": 0.4666666666666667,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.4722222222222222,
+    0.3055555555555555,
+    0.6444444444444444
+   ],
+   "all_evidence": 0.2,
+   "mrr": 0.44666666666666666,
+   "doc_recall": 0.711111111111111,
+   "llm_calls": 2.0,
+   "latency_median_s": 2.5718986499998664,
+   "context_chars": 6842.25,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.05,
+    -0.15,
+    0.25
+   ],
+   "recall_vs_baseline": [
+    -0.03333333333333333,
+    -0.13333333333333333,
+    0.06666666666666667
+   ]
+  },
+  "rag_fusion": {
+   "n": 20,
+   "em": [
+    0.5,
+    0.3,
+    0.7
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.4,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.5,
+   "false_refusal": 0.4,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.5055555555555555,
+    0.3222222222222222,
+    0.6833333333333333
+   ],
+   "all_evidence": 0.26666666666666666,
+   "mrr": 0.40444444444444444,
+   "doc_recall": 0.65,
+   "llm_calls": 2.0,
+   "latency_median_s": 1.884882899999866,
+   "context_chars": 6833.45,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.0,
+    -0.2,
+    0.2
+   ],
+   "recall_vs_baseline": [
+    0.0,
+    -0.15,
+    0.15
+   ]
+  },
+  "decomposition": {
+   "n": 20,
+   "em": [
+    0.65,
+    0.45,
+    0.85
+   ],
+   "em_by_type": {
+    "inference_query": 0.6,
+    "comparison_query": 0.6,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.65,
+   "false_refusal": 0.26666666666666666,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.45555555555555555,
+    0.3222222222222222,
+    0.6055555555555555
+   ],
+   "all_evidence": 0.13333333333333333,
+   "mrr": 0.5188888888888888,
+   "doc_recall": 0.6777777777777777,
+   "llm_calls": 4.7,
+   "latency_median_s": 2.9992936499997995,
+   "context_chars": 5348.05,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.15,
+    0.0,
+    0.3
+   ],
+   "recall_vs_baseline": [
+    -0.05,
+    -0.21666666666666667,
+    0.1
+   ]
+  },
+  "decomposition_individual": {
+   "n": 20,
+   "em": [
+    0.65,
+    0.45,
+    0.85
+   ],
+   "em_by_type": {
+    "inference_query": 0.6,
+    "comparison_query": 0.6,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.65,
+   "false_refusal": 0.26666666666666666,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.45555555555555555,
+    0.3222222222222222,
+    0.6055555555555555
+   ],
+   "all_evidence": 0.13333333333333333,
+   "mrr": 0.5188888888888888,
+   "doc_recall": 0.6777777777777777,
+   "llm_calls": 4.7,
+   "latency_median_s": 2.3914598999999725,
+   "context_chars": 5348.05,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.15,
+    0.0,
+    0.3
+   ],
+   "recall_vs_baseline": [
+    -0.05,
+    -0.21666666666666667,
+    0.1
+   ]
+  },
+  "step_back": {
+   "n": 20,
+   "em": [
+    0.55,
+    0.35,
+    0.75
+   ],
+   "em_by_type": {
+    "inference_query": 0.0,
+    "comparison_query": 0.8,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.55,
+   "false_refusal": 0.5333333333333333,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.38333333333333336,
+    0.2222222222222222,
+    0.5612499999999994
+   ],
+   "all_evidence": 0.13333333333333333,
+   "mrr": 0.4277777777777778,
+   "doc_recall": 0.6277777777777778,
+   "llm_calls": 2.0,
+   "latency_median_s": 0.8411017999997057,
+   "context_chars": 6694.3,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.05,
+    -0.15,
+    0.25
+   ],
+   "recall_vs_baseline": [
+    -0.12222222222222222,
+    -0.21666666666666667,
+    -0.03333333333333333
+   ]
+  },
+  "hyde": {
+   "n": 20,
+   "em": [
+    0.5,
+    0.25,
+    0.7
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.6,
+    "temporal_query": 0.2,
+    "null_query": 1.0
+   },
+   "f1": 0.5,
+   "false_refusal": 0.5333333333333333,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.3888888888888889,
+    0.21666666666666667,
+    0.5777777777777777
+   ],
+   "all_evidence": 0.2,
+   "mrr": 0.4277777777777778,
+   "doc_recall": 0.5666666666666667,
+   "llm_calls": 2.0,
+   "latency_median_s": 1.52195329999995,
+   "context_chars": 6718.35,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.0,
+    -0.2,
+    0.2
+   ],
+   "recall_vs_baseline": [
+    -0.11666666666666667,
+    -0.3,
+    0.03333333333333333
+   ]
+  },
+  "routing_logical": {
+   "n": 20,
+   "em": [
+    0.45,
+    0.25,
+    0.65
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.4,
+    "temporal_query": 0.2,
+    "null_query": 1.0
+   },
+   "f1": 0.45,
+   "false_refusal": 0.4666666666666667,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.4833333333333333,
+    0.3055555555555556,
+    0.6723611111111104
+   ],
+   "all_evidence": 0.26666666666666666,
+   "mrr": 0.4805555555555555,
+   "doc_recall": 0.65,
+   "llm_calls": 2.0,
+   "latency_median_s": 0.7800346499998341,
+   "context_chars": 6803.85,
+   "errors": 0,
+   "em_vs_baseline": [
+    -0.05,
+    -0.15,
+    0.0
+   ],
+   "recall_vs_baseline": [
+    -0.02222222222222222,
+    -0.06666666666666667,
+    0.0
+   ]
+  },
+  "routing_semantic": {
+   "n": 20,
+   "em": [
+    0.45,
+    0.25,
+    0.65
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.4,
+    "temporal_query": 0.2,
+    "null_query": 1.0
+   },
+   "f1": 0.45,
+   "false_refusal": 0.4,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.4833333333333333,
+    0.3055555555555556,
+    0.6723611111111104
+   ],
+   "all_evidence": 0.26666666666666666,
+   "mrr": 0.38055555555555554,
+   "doc_recall": 0.65,
+   "llm_calls": 1.0,
+   "latency_median_s": 0.3709318500000336,
+   "context_chars": 6868.1,
+   "errors": 0,
+   "em_vs_baseline": [
+    -0.05,
+    -0.15,
+    0.0
+   ],
+   "recall_vs_baseline": [
+    -0.02222222222222222,
+    -0.06666666666666667,
+    0.0
+   ]
+  },
+  "query_construction": {
+   "n": 20,
+   "em": [
+    0.6,
+    0.4,
+    0.8
+   ],
+   "em_by_type": {
+    "inference_query": 0.2,
+    "comparison_query": 0.8,
+    "temporal_query": 0.4,
+    "null_query": 1.0
+   },
+   "f1": 0.6,
+   "false_refusal": 0.3333333333333333,
+   "null_refusal": 1.0,
+   "evidence_recall": [
+    0.5666666666666667,
+    0.3666666666666666,
+    0.7666666666666667
+   ],
+   "all_evidence": 0.4,
+   "mrr": 0.5911111111111111,
+   "doc_recall": 0.7611111111111111,
+   "llm_calls": 2.0,
+   "latency_median_s": 0.8138958500001081,
+   "context_chars": 6759.9,
+   "errors": 0,
+   "em_vs_baseline": [
+    0.1,
+    -0.15,
+    0.35
+   ],
+   "recall_vs_baseline": [
+    0.061111111111111116,
+    -0.0722222222222222,
+    0.23333333333333334
    ]
   }
  }
