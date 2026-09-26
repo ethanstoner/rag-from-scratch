@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+.pytest_cache/
+.cache/
+data/
+temp/
+docs/
+PROJECT_STATUS.md
+CLAUDE.md
+results/*.jsonl

@@ -1,0 +1,15 @@
+[project]
+name = "ragfs"
+version = "0.1.0"
+description = "Eighteen RAG techniques built from scratch in plain Python and benchmarked on one dataset"
+requires-python = ">=3.11"
+dependencies = ["numpy", "httpx", "scikit-learn", "beautifulsoup4"]
+
+[project.optional-dependencies]
+neural = ["torch", "transformers"]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["ollama: needs a running Ollama server", "gpu: needs torch + model downloads"]
