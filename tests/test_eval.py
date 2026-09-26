@@ -1,7 +1,7 @@
 from ragfs.core.chunker import chunk_document
 from ragfs.core.corpus import locate, normalize
 from ragfs.core.types import Chunk
-from ragfs.eval.metrics import (bootstrap_ci, exact_match, paired_diff_ci,
+from ragfs.eval.metrics import (bootstrap_ci, contains, exact_match, paired_diff_ci,
                                 retrieval_metrics, token_f1)
 
 
@@ -44,3 +44,9 @@ def test_bootstrap_ci_brackets_mean():
     assert mean == 0.5 and lo < 0.5 < hi
     d, lo, hi = paired_diff_ci([1] * 30, [0] * 30)
     assert d == lo == hi == 1.0
+
+
+def test_contains_matches_whole_words_only():
+    assert contains("The answer is Sam Bankman-Fried.", "Sam Bankman-Fried") == 1.0
+    assert contains("Nothing known", "no") == 0.0
+    assert contains("No, it did not.", "no") == 1.0

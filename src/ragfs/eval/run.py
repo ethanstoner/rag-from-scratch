@@ -11,7 +11,7 @@ from statistics import median
 
 from ragfs.core.config import RESULTS_DIR
 from ragfs.eval.dataset import TYPES, Query
-from ragfs.eval.metrics import (bootstrap_ci, exact_match, paired_diff_ci,
+from ragfs.eval.metrics import (bootstrap_ci, contains, exact_match, paired_diff_ci,
                                 retrieval_metrics, token_f1)
 from ragfs.techniques.base import REFUSAL, is_refusal
 
@@ -31,7 +31,7 @@ def run_one(tech, q: Query) -> dict:
     gold = q.answer
     row = {"id": q.id, "type": q.type, "technique": tech.name, "question": q.question,
            "gold": gold, "answer": answer,
-           "em": exact_match(answer, gold), "f1": token_f1(answer, gold),
+           "em": exact_match(answer, gold), "acc": contains(answer, gold), "f1": token_f1(answer, gold),
            "refused": is_refusal(answer),
            "llm_calls": llm.calls,
            "latency_s": wall - llm.real_seconds + llm.model_seconds,
@@ -87,6 +87,7 @@ def summarise(results: dict[str, list[dict]], baseline: str = "baseline") -> dic
         s = {"n": len(rows),
              "em": bootstrap_ci([r["em"] for r in rows]),
              "em_by_type": {t: _mean([r for r in rows if r["type"] == t], "em") for t in TYPES},
+             "acc": bootstrap_ci([r.get("acc", contains(r["answer"], r["gold"])) for r in rows]),
              "f1": _mean(rows, "f1"),
              "false_refusal": _mean([{"x": float(r["refused"])} for r in answerable], "x"),
              "null_refusal": _mean([{"x": float(r["refused"])} for r in nulls], "x"),
@@ -129,12 +130,12 @@ def to_markdown(summary: dict, meta: dict) -> str:
              f"temperature 0, top-k {meta.get('top_k')}. 95% bootstrap CIs; deltas are paired against "
              f"`baseline` and bold where the CI excludes zero.\n",
              "## Answer quality\n",
-             "| technique | EM | EM Δ vs baseline | inference | comparison | temporal | null (refusal) | false refusals | LLM calls/q | median latency |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+             "| technique | EM | EM Δ vs baseline | accuracy | inference | comparison | temporal | null (refusal) | false refusals | LLM calls/q | median latency |",
+             "|---|---|---|---|---|---|---|---|---|---|---|"]
     for n in order:
         s = summary[n]
         bt = s["em_by_type"]
-        lines.append(f"| {n} | {_ci(s['em'])} | {_delta(s.get('em_vs_baseline'))} | {bt['inference_query']:.2f} | "
+        lines.append(f"| {n} | {_ci(s['em'])} | {_delta(s.get('em_vs_baseline'))} | {s['acc'][0]:.3f} | {bt['inference_query']:.2f} | "
                      f"{bt['comparison_query']:.2f} | {bt['temporal_query']:.2f} | {bt['null_query']:.2f} | "
                      f"{s['false_refusal']:.2f} | {s['llm_calls']:.1f} | {s['latency_median_s']:.1f}s |")
     lines += ["\n## Retrieval (answerable queries)\n",

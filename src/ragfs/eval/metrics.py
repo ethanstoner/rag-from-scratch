@@ -42,6 +42,12 @@ def exact_match(pred: str, gold: str) -> float:
     return float(normalize_answer(pred) == normalize_answer(gold))
 
 
+def contains(pred: str, gold: str) -> float:
+    """The MultiHop-RAG paper's accuracy: the gold answer appears in the response (as whole words)."""
+    p, g = normalize_answer(pred).split(), normalize_answer(gold).split()
+    return float(any(p[i:i + len(g)] == g for i in range(len(p) - len(g) + 1))) if g else 0.0
+
+
 def token_f1(pred: str, gold: str) -> float:
     p, g = normalize_answer(pred).split(), normalize_answer(gold).split()
     common = sum((Counter(p) & Counter(g)).values())
