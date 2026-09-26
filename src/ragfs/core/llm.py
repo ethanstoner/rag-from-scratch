@@ -11,7 +11,7 @@ from pathlib import Path
 
 import httpx
 
-from ragfs.core.config import CACHE_DIR, CHAT_MODEL, OLLAMA_HOST
+from ragfs.core.config import CACHE_DIR, CHAT_MODEL, NUM_CTX, OLLAMA_HOST
 
 
 class LLMError(RuntimeError):
@@ -25,10 +25,11 @@ class OllamaLLM:
         if cache_dir:
             cache_dir.mkdir(parents=True, exist_ok=True)
         self.calls = 0
-        self.model_seconds = 0.0
+        self.model_seconds = 0.0  # time the calls took when first made (cache hits included)
+        self.real_seconds = 0.0   # time actually spent waiting on Ollama in this process
 
     def reset_counters(self):
-        self.calls, self.model_seconds = 0, 0.0
+        self.calls, self.model_seconds, self.real_seconds = 0, 0.0, 0.0
 
     def _cache_path(self, body):
         key = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
@@ -36,7 +37,7 @@ class OllamaLLM:
 
     def chat(self, messages, temperature=0.0, format=None) -> str:
         body = {"model": self.model, "messages": messages, "stream": False,
-                "think": False, "options": {"temperature": temperature}}
+                "think": False, "options": {"temperature": temperature, "num_ctx": NUM_CTX}}
         if format is not None:
             body["format"] = format
         self.calls += 1
@@ -51,6 +52,7 @@ class OllamaLLM:
         elapsed = time.perf_counter() - t0
         content = r.json()["message"]["content"]
         self.model_seconds += elapsed
+        self.real_seconds += elapsed
         if path:
             path.write_text(json.dumps({"content": content, "elapsed": elapsed}), encoding="utf-8")
         return content

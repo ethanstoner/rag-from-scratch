@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: ragfs
+Version: 0.1.0
+Summary: Eighteen RAG techniques built from scratch in plain Python and benchmarked on one dataset
+Requires-Python: >=3.11
+Requires-Dist: numpy
+Requires-Dist: httpx
+Requires-Dist: scikit-learn
+Requires-Dist: beautifulsoup4
+Provides-Extra: neural
+Requires-Dist: torch; extra == "neural"
+Requires-Dist: transformers; extra == "neural"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

@@ -24,6 +24,9 @@ OLLAMA_HOST = normalize_host(os.environ.get("OLLAMA_HOST"))
 CHAT_MODEL = os.environ.get("RAGFS_CHAT_MODEL", "gemma4:latest")
 JUDGE_MODEL = os.environ.get("RAGFS_JUDGE_MODEL", "qwen3:8b")
 EMBED_MODEL = "nomic-embed-text"
+# Set explicitly: Ollama's default window silently truncates long prompts (whole
+# articles in multi-representation, many chunks in decomposition).
+NUM_CTX = 16384
 EMBED_BATCH = 32
 
 # nomic-embed-text was trained with these prefixes; retrieval degrades without them.
@@ -35,19 +38,13 @@ DATA_DIR = PROJECT_ROOT / "data"
 CACHE_DIR = PROJECT_ROOT / ".cache"
 RESULTS_DIR = PROJECT_ROOT / "results"
 
-# The corpus: Lilian Weng posts the course draws on.
-POSTS = [
-    "2023-06-23-agent",
-    "2023-03-15-prompt-engineering",
-    "2023-10-25-adv-attack-llm",
-    "2024-02-05-human-data-quality",
-    "2024-07-07-hallucination",
-]
-POST_URL = "https://lilianweng.github.io/posts/{slug}/"
+DATASET_URL = "https://huggingface.co/datasets/yixuantt/MultiHopRAG/resolve/main/{file}"
 
-# Chunking, in characters (the course's RecursiveCharacterTextSplitter defaults).
+# Chunking, in characters (the course's RecursiveCharacterTextSplitter defaults;
+# MultiHop-RAG's own baselines used 256-token chunks, about the same).
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 
-TOP_K = 5
+# Evidence for one query spans 2-4 articles, so generation sees more than the usual 4-5.
+TOP_K = 8
 RRF_K = 60

@@ -1,20 +1,28 @@
-"""Fetch the Lilian Weng posts and turn each into clean text plus metadata.
-
-Raw HTML is cached under data/raw/, parsed documents under data/docs.jsonl.
-"""
+"""The MultiHop-RAG news corpus (Tang & Yang, 2024; ODC-BY): 609 articles, Sep-Dec 2023."""
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import httpx
-from bs4 import BeautifulSoup, NavigableString
 
-from ragfs.core.config import DATA_DIR, POST_URL, POSTS
+from ragfs.core.config import DATA_DIR, DATASET_URL
 
-BLOCK_TAGS = ["p", "li", "pre", "blockquote", "figcaption", "tr", "h1", "h2", "h3", "h4", "h5", "div"]
+FILES = ("corpus.json", "MultiHopRAG.json")
 
-# Straight quotes keep hand-written eval evidence quotes typeable.
 QUOTES = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
+
+
+def normalize(text: str) -> str:
+    """Straight quotes, single spaces, at most one blank line. Paragraph breaks survive for the chunker."""
+    text = re.sub(r"[ \t ]+", " ", text.translate(QUOTES))
+    return re.sub(r"\s*\n\s*\n\s*", "\n\n", text).strip()
+
+
+def locate(fact: str, text: str) -> tuple[int, int] | None:
+    """Character span of `fact` in `text`, tolerant of whitespace differences."""
+    words = normalize(fact).split()
+    m = re.search(r"\s+".join(map(re.escape, words)), text)
+    return (m.start(), m.end()) if m else None
 
 
 @dataclass
@@ -22,62 +30,39 @@ class Document:
     id: str
     title: str
     url: str
-    date: str
-    tags: list[str]
-    reading_minutes: int
+    source: str
+    category: str
+    author: str
+    published_at: str
     text: str
 
     @property
-    def word_count(self):
-        return len(self.text.split())
+    def date(self):
+        return self.published_at[:10]
 
     def metadata(self):
-        return {"title": self.title, "url": self.url, "date": self.date, "tags": self.tags,
-                "reading_minutes": self.reading_minutes, "word_count": self.word_count}
+        return {"title": self.title, "source": self.source, "category": self.category,
+                "date": self.date, "url": self.url}
 
 
-def clean_text(text: str) -> str:
-    text = text.translate(QUOTES)
-    lines = [re.sub(r"[ \t ]+", " ", ln).strip() for ln in text.splitlines()]
-    out = "\n".join(lines)
-    return re.sub(r"\n{3,}", "\n\n", out).strip()
+def download(refresh: bool = False):
+    folder = DATA_DIR / "multihop"
+    folder.mkdir(parents=True, exist_ok=True)
+    for name in FILES:
+        path = folder / name
+        if refresh or not path.exists():
+            r = httpx.get(DATASET_URL.format(file=name), timeout=300.0, follow_redirects=True)
+            r.raise_for_status()
+            path.write_bytes(r.content)
+    return folder
 
 
-def parse_post(html: str, slug: str) -> Document:
-    soup = BeautifulSoup(html, "html.parser")
-    title = soup.select_one(".post-title").get_text(" ", strip=True)
-    date = soup.select_one('meta[property="article:published_time"]')["content"][:10]
-    tags = [a.get_text(strip=True) for a in soup.select(".post-tags a")]
-    meta = soup.select_one(".post-meta").get_text(" ", strip=True)
-    m = re.search(r"(\d+)\s*min", meta)
-    body = soup.select_one(".post-content")
-    for bad in body.select("script, style, .toc, a.anchor"):
-        bad.decompose()
-    for level in range(1, 5):
-        for h in body.find_all(f"h{level}"):
-            h.insert(0, NavigableString("#" * level + " "))
-    for el in body.find_all(BLOCK_TAGS):
-        el.insert_before(NavigableString("\n"))
-        el.append(NavigableString("\n"))
-    return Document(id=slug, title=title, url=POST_URL.format(slug=slug), date=date, tags=tags,
-                    reading_minutes=int(m.group(1)) if m else 0, text=clean_text(body.get_text("")))
+def load_raw(name: str):
+    return json.loads((download() / name).read_text(encoding="utf-8"))
 
 
-def fetch_raw(slug: str) -> str:
-    path = DATA_DIR / "raw" / f"{slug}.html"
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        r = httpx.get(POST_URL.format(slug=slug), timeout=60.0, follow_redirects=True)
-        r.raise_for_status()
-        path.write_text(r.text, encoding="utf-8")
-    return path.read_text(encoding="utf-8")
-
-
-def load_corpus(refresh: bool = False) -> list[Document]:
-    path = DATA_DIR / "docs.jsonl"
-    if path.exists() and not refresh:
-        return [Document(**json.loads(ln)) for ln in path.read_text(encoding="utf-8").splitlines()]
-    docs = [parse_post(fetch_raw(s), s) for s in POSTS]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(json.dumps(asdict(d)) for d in docs) + "\n", encoding="utf-8")
-    return docs
+def load_corpus() -> list[Document]:
+    return [Document(id=f"a{i:03d}", title=a["title"], url=a["url"], source=a["source"],
+                     category=a["category"], author=a["author"], published_at=a["published_at"],
+                     text=normalize(a["body"]))
+            for i, a in enumerate(load_raw("corpus.json"))]

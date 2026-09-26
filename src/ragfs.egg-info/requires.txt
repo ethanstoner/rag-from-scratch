@@ -1,0 +1,11 @@
+numpy
+httpx
+scikit-learn
+beautifulsoup4
+
+[dev]
+pytest
+
+[neural]
+torch
+transformers

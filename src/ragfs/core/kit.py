@@ -30,7 +30,7 @@ def build_kit(llm=None, embedder=None, docs=None) -> Kit:
         llm = llm or OllamaLLM()
         embedder = embedder or OllamaEmbedder()
     docs = docs if docs is not None else load_corpus()
-    chunks = [c for d in docs for c in chunk_document(d.id, d.text, {"title": d.title, "date": d.date})]
+    chunks = [c for d in docs for c in chunk_document(d.id, d.text, d.metadata())]
     store = VectorStore(embedder)
     store.add(chunks)
     return Kit(docs=docs, chunks=chunks, store=store, bm25=BM25(chunks), llm=llm, embedder=embedder)

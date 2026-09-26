@@ -3,24 +3,30 @@ from ragfs.core.config import TOP_K
 from ragfs.core.kit import Kit
 from ragfs.core.types import Chunk, Result
 
-REFUSAL = "I don't know."
+REFUSAL = "Insufficient information."
 
-ANSWER_PROMPT = """Answer the question using only the context below. Be concise.
-If the context does not contain the answer, reply exactly: {refusal}
+# MultiHop-RAG gold answers are a single entity, Yes/No, or the refusal string, so the
+# prompt asks for exactly that shape; exact match is then a fair metric.
+ANSWER_PROMPT = """Answer the question using only the news excerpts below.
+Reply with the answer only: a name or short phrase, or Yes / No for yes-no questions. No explanation.
+If the excerpts do not contain enough information, reply exactly: {refusal}
 
-Context:
+Excerpts:
 {context}
 
-Question: {question}"""
+Question: {question}
+Answer:"""
 
 
 def format_context(chunks: list[Chunk]) -> str:
-    return "\n\n---\n\n".join(f"[{c.metadata.get('title', c.doc_id)}]\n{c.text}" for c in chunks)
+    def header(c):
+        m = c.metadata
+        return f"[{m.get('source', '?')}, {m.get('date', '?')}] {m.get('title', c.doc_id)}"
+    return "\n\n---\n\n".join(f"{header(c)}\n{c.text}" for c in chunks)
 
 
 def is_refusal(answer: str) -> bool:
-    a = answer.strip().lower()
-    return a.startswith("i don't know") or a.startswith("i do not know")
+    return answer.strip().lower().startswith("insufficient information")
 
 
 class Technique:

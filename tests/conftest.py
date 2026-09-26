@@ -31,10 +31,10 @@ class FakeLLM:
     """Replies via `responder(prompt) -> str | dict`; records every prompt."""
 
     def __init__(self, responder=lambda p: "stub answer"):
-        self.responder, self.prompts, self.calls, self.model_seconds = responder, [], 0, 0.0
+        self.responder, self.prompts, self.calls, self.model_seconds, self.real_seconds = responder, [], 0, 0.0, 0.0
 
     def reset_counters(self):
-        self.calls, self.model_seconds = 0, 0.0
+        self.calls, self.model_seconds, self.real_seconds = 0, 0.0, 0.0
 
     def complete(self, prompt, system=None, **kw):
         self.calls += 1
