@@ -182,8 +182,8 @@ The tests cover the splitter (size, overlap, exact offsets even when an article 
 BM25, RRF, the vector store, the metrics and bootstrap, and every technique end to end against a
 scripted fake LLM. That includes structured-output failures falling back to plain retrieval, CRAG
 keeping only graded-relevant chunks, and Self-RAG giving up after its round cap. They also cover
-the CLI's `--no-cache` and `--results-dir` flags. A GitHub Actions workflow
-(`.github/workflows/tests.yml`) runs the non-GPU suite, which needs no Ollama, GPU or dataset.
+the CLI's `--no-cache` and `--results-dir` flags. CI (`.github/workflows/tests.yml`) runs the
+non-GPU suite on every push, which needs no Ollama, GPU or dataset.
 
 ## What I Learned
 - **Measure retrieval separately from answers.** Several techniques gained EM without retrieving
