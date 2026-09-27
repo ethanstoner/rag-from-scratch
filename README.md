@@ -4,7 +4,7 @@ Every technique from LangChain's *RAG From Scratch* course, rebuilt in plain Pyt
 framework and benchmarked head to head on 300 MultiHop-RAG questions, to measure which ones
 actually help and by how much.
 
-![Paired deltas vs baseline](results/deltas.png)
+![Paired deltas of the other 17 techniques vs the dense baseline](results/deltas.png)
 
 ### Highlights
 - **Cross-encoder reranking is the clear winner:** +10.3 points of exact match over dense top-8
@@ -16,8 +16,8 @@ actually help and by how much.
 - **Self-correcting loops backfire on multi-hop questions.** CRAG (-12.0) and Self-RAG (-13.7) grade
   each chunk against the whole question, keep only about 2 of 8 chunks, and lose 19-21 points of
   evidence recall while making 16-25 LLM calls per question.
-- 18 techniques on one local stack (Ollama + an RTX 4090), with paired bootstrap confidence intervals
-  on every comparison.
+- 18 techniques (a dense baseline and 17 variants) on one local stack (Ollama + an RTX 4090), with
+  paired bootstrap confidence intervals on every comparison against the baseline.
 
 **Python · NumPy · PyTorch · Ollama (gemma4 8B, nomic-embed-text) · ColBERTv2 · bge-reranker-v2-m3**
 
@@ -131,6 +131,26 @@ MultiHop-RAG corpus (609 articles) ──► recursive splitter (1000/200, exact
 - **Self-RAG regenerates deterministically** with a note that its previous answer failed a check,
   instead of resampling.
 
+## Engineering Highlights
+- **Implemented 18 techniques (every lesson of the course plus hybrid search) in about 1,800 lines
+  of framework-free Python.**
+  That includes a recursive splitter, a NumPy vector store, Okapi BM25, reciprocal rank fusion,
+  GMM-clustered RAPTOR trees, and CRAG and Self-RAG written as plain control loops instead of
+  LangGraph graphs.
+- **Built an evaluation harness that scores retrieval exactly.** It locates all 6,084 gold evidence
+  facts as character spans, reports paired bootstrap CIs for every technique, and caches LLM calls
+  with their original durations, so a resumed run reports the same latency as a cold one.
+- **Showed that a one-call cross-encoder reranker (+10.3 EM) beats 16-25-call agentic loops by
+  22-24 points** on multi-hop questions, and traced the loops' losses to per-chunk relevance grading
+  that keeps about 2 of 8 chunks.
+- **Wrote ColBERTv2 late-interaction search by hand:** a token-level index of 8,314 chunks built in
+  about 12 s, with exhaustive MaxSim scoring on the GPU via a segmented `scatter_reduce`.
+- **Found and fixed three silent failure modes:**
+  - gemma4's default "thinking" mode made each call take about 27 s instead of 0.3 s.
+  - Ollama's small default context window would truncate long prompts.
+  - Recovering chunk offsets with `str.find` mislocated 21 of 8,314 chunks in articles with repeated
+    boilerplate.
+
 ## Getting started
 
 Requires Python 3.11+, [Ollama](https://ollama.com) with `gemma4` and `nomic-embed-text` pulled,
@@ -143,6 +163,8 @@ python -m ragfs ask -t rerank "Which company did The Verge and TechCrunch both c
 python -m ragfs eval --per-type 75                          # full benchmark (resumable)
 python -m ragfs eval --techniques baseline,hybrid --per-type 5   # quick check
 python -m ragfs report && python -m ragfs plot
+python -m ragfs eval --no-cache --techniques baseline       # bypass the LLM cache to re-measure latency
+python -m ragfs report --results-dir path/to/copy           # rebuild tables from another set of .jsonl files
 ```
 
 The dataset downloads from Hugging Face on first use. Set `OLLAMA_HOST` if Ollama is not on the default
@@ -152,14 +174,27 @@ most of it CRAG and Self-RAG, plus half an hour building the summary indexes.
 ## Testing
 
 ```bash
-venv/Scripts/python -m pytest -q            # 36 tests
+venv/Scripts/python -m pytest -q            # 41 tests
 venv/Scripts/python -m pytest -q -m "not gpu"   # skip the ColBERT/reranker model downloads
 ```
 
 The tests cover the splitter (size, overlap, exact offsets even when an article repeats itself),
 BM25, RRF, the vector store, the metrics and bootstrap, and every technique end to end against a
 scripted fake LLM. That includes structured-output failures falling back to plain retrieval, CRAG
-keeping only graded-relevant chunks, and Self-RAG giving up after its round cap.
+keeping only graded-relevant chunks, and Self-RAG giving up after its round cap. They also cover
+the CLI's `--no-cache` and `--results-dir` flags. A GitHub Actions workflow
+(`.github/workflows/tests.yml`) runs the non-GPU suite, which needs no Ollama, GPU or dataset.
+
+## What I Learned
+- **Measure retrieval separately from answers.** Several techniques gained EM without retrieving
+  any more evidence, and several agentic ones lost EM because they threw evidence away. A single
+  answer-accuracy number would have hidden both.
+- **A tutorial's defaults are tuned for its demo.** Per-chunk relevance grading looks sensible on
+  single-fact questions over one blog post, and it collapses when the answer is spread across
+  several articles.
+- **Local models fail quietly.** Thinking mode, context truncation and off-by-a-few-chunks offsets
+  all produced plausible output rather than errors. Each one turned up only because something was
+  measured.
 
 ## Limitations
 - **One generator** (gemma4 8B, Q4) **and one embedder.** A stronger model may narrow the gap between
