@@ -152,5 +152,5 @@ def to_markdown(summary: dict, meta: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def results_path(name: str) -> Path:
-    return RESULTS_DIR / f"{name}.jsonl"
+def results_path(name: str, root: Path = RESULTS_DIR) -> Path:
+    return root / f"{name}.jsonl"

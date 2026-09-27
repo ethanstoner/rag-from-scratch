@@ -2,6 +2,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from ragfs.core.config import CHAT_MODEL, EMBED_MODEL, RESULTS_DIR, TOP_K
 from ragfs.techniques import registry
@@ -32,13 +33,17 @@ def cmd_eval(args):
     from ragfs.core.kit import build_kit
     from ragfs.eval.dataset import load_queries, stratified_sample
     from ragfs.eval.run import results_path, run_technique
-    kit = build_kit()
+    llm = None
+    if args.no_cache:
+        from ragfs.core.llm import OllamaLLM
+        llm = OllamaLLM(cache_dir=None)  # every call goes to the model: a true re-measurement
+    kit = build_kit(llm=llm)
     queries = stratified_sample(load_queries(kit.docs), args.per_type, args.seed)
     names = args.techniques.split(",") if args.techniques else registry.names()
     for n in names:
         print(f"== {n}", flush=True)
         tech = registry.get(n)(kit)
-        run_technique(tech, queries, results_path(n), log=lambda s: print(s, flush=True))
+        run_technique(tech, queries, results_path(n, args.results_dir), log=lambda s: print(s, flush=True))
     cmd_report(args)
 
 
@@ -50,7 +55,7 @@ def cmd_report(args):
     ids = {q.id for q in queries}
     results = {}
     for n in registry.names():
-        p = results_path(n)
+        p = results_path(n, args.results_dir)
         if p.exists():
             rows = [r for r in map(json.loads, p.read_text(encoding="utf-8").splitlines()) if r["id"] in ids]
             if len(rows) == len(ids):
@@ -61,9 +66,10 @@ def cmd_report(args):
     meta = {"n": len(ids), "per_type": args.per_type, "seed": args.seed, "chat_model": CHAT_MODEL,
             "embed_model": EMBED_MODEL, "top_k": TOP_K}
     md = to_markdown(summary, meta)
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / "results.md").write_text(md, encoding="utf-8")
-    (RESULTS_DIR / "summary.json").write_text(json.dumps({"meta": meta, "summary": summary}, indent=1), encoding="utf-8")
+    out = args.results_dir
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "results.md").write_text(md, encoding="utf-8")
+    (out / "summary.json").write_text(json.dumps({"meta": meta, "summary": summary}, indent=1), encoding="utf-8")
     print(md)
 
 
@@ -86,8 +92,10 @@ def main(argv=None):
         e = sub.add_parser(name)
         e.add_argument("--per-type", type=int, default=75)
         e.add_argument("--seed", type=int, default=0)
+        e.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
         if name == "eval":
             e.add_argument("--techniques", help="comma-separated; default all")
+            e.add_argument("--no-cache", action="store_true", help="bypass the LLM response cache")
         e.set_defaults(fn=fn)
     args = p.parse_args(argv)
     args.fn(args)
