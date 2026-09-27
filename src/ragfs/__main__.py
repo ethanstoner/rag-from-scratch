@@ -67,11 +67,17 @@ def cmd_report(args):
     print(md)
 
 
+def cmd_plot(_):
+    from ragfs.eval.plot import plot
+    print(plot())
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(prog="ragfs")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list").set_defaults(fn=cmd_list)
+    sub.add_parser("plot").set_defaults(fn=cmd_plot)
     a = sub.add_parser("ask")
     a.add_argument("question")
     a.add_argument("-t", "--technique", default="baseline")

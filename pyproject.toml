@@ -7,7 +7,7 @@ dependencies = ["numpy", "httpx", "scikit-learn", "beautifulsoup4"]
 
 [project.optional-dependencies]
 neural = ["torch", "transformers"]
-dev = ["pytest"]
+dev = ["pytest", "matplotlib"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
