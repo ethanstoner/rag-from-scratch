@@ -9,3 +9,5 @@ PROJECT_STATUS.md
 CLAUDE.md
 results/*.jsonl
 *.egg-info/
+.env
+.env.*
