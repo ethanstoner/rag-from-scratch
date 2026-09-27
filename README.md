@@ -56,6 +56,24 @@ For scale: answering "Yes" to everything scores 0.287 EM on this sample, and alw
 0.250. Leaving out the 75 unanswerable questions (which every technique refuses correctly
 91-100% of the time), the baseline gets 0.418 of answerable questions right and rerank 0.556.
 
+### Reproducibility
+I re-ran the headline techniques from scratch with the LLM cache bypassed
+(`ragfs eval --no-cache`). The conclusions held:
+
+| technique | EM, published run | EM, cold rerun | Δ vs baseline, cold rerun |
+|---|---|---|---|
+| baseline | 0.563 | 0.553 | — |
+| rerank | 0.667 | 0.667 | **+0.113** [+0.063, +0.167] |
+| query construction | 0.650 | 0.643 | **+0.090** [+0.047, +0.137] |
+| hybrid | 0.650 | 0.630 | **+0.077** [+0.030, +0.123] |
+| CRAG | 0.443 | 0.440 | **-0.113** [-0.157, -0.067] |
+| Self-RAG | 0.427 | 0.407 | **-0.147** [-0.190, -0.100] |
+
+Retrieval was bit-identical for every single-shot technique (300/300 queries returned the same
+chunks). Generation is not: Ollama at temperature 0 still varies slightly on the GPU, and 1-10% of
+answers changed between runs (baseline 269/300 identical, rerank 299/300). Every change stays well
+inside the confidence intervals.
+
 ## What the numbers say
 
 **Retrieval quality drives the answer.** The three techniques that raise evidence recall
@@ -108,9 +126,9 @@ MultiHop-RAG corpus (609 articles) ──► recursive splitter (1000/200, exact
 - **Everything is written by hand.** That covers the recursive character splitter, cosine search,
   Okapi BM25, reciprocal rank fusion, GMM clustering for RAPTOR, ColBERT MaxSim scoring, and the
   CRAG and Self-RAG control loops. There is no LangChain, LangGraph, Chroma or colbert-ai.
-- **Every LLM call goes through one client** with a disk cache keyed on the full request. Reruns are
-  free and deterministic, and each call records its original duration, so latency stays honest on
-  cache hits.
+- **Every LLM call goes through one client** with a disk cache keyed on the full request. Cached reruns are
+  free and replay the same answers, and each call records its original duration, so latency stays
+  honest on cache hits. `--no-cache` forces fresh calls.
 - **Evidence is scored exactly.** Each gold evidence fact (6,084 of them) is located as a character
   span in its article. A retrieved chunk counts as holding it if the chunk covers at least half the
   span, so recall does not depend on fuzzy string matching.
@@ -139,7 +157,8 @@ MultiHop-RAG corpus (609 articles) ──► recursive splitter (1000/200, exact
   LangGraph graphs.
 - **Built an evaluation harness that scores retrieval exactly.** It locates all 6,084 gold evidence
   facts as character spans, reports paired bootstrap CIs for every technique, and caches LLM calls
-  with their original durations, so a resumed run reports the same latency as a cold one.
+  with their original durations, so a resumed run reports the same latency as a cold one. A cold
+  rerun with the cache bypassed reproduced every headline result.
 - **Showed that a one-call cross-encoder reranker (+10.3 EM) beats 16-25-call agentic loops by
   22-24 points** on multi-hop questions, and traced the loops' losses to per-chunk relevance grading
   that keeps about 2 of 8 chunks.
