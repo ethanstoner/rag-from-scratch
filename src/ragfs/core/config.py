@@ -2,13 +2,13 @@
 import os
 from pathlib import Path
 
-_DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11435"
+_DEFAULT_OLLAMA_HOST = "http://127.0.0.1:11434"
 
 
 def normalize_host(raw: str | None) -> str:
     """Turn an OLLAMA_HOST value into a URL a client can request.
 
-    Ollama's OLLAMA_HOST is a *bind* address (often `0.0.0.0:11435`, no scheme).
+    Ollama's OLLAMA_HOST is a *bind* address (often `0.0.0.0:11434`, no scheme).
     0.0.0.0 refuses connections when dialled, so rewrite it to loopback.
     """
     host = (raw or "").strip()
@@ -22,7 +22,6 @@ def normalize_host(raw: str | None) -> str:
 OLLAMA_HOST = normalize_host(os.environ.get("OLLAMA_HOST"))
 
 CHAT_MODEL = os.environ.get("RAGFS_CHAT_MODEL", "gemma4:latest")
-JUDGE_MODEL = os.environ.get("RAGFS_JUDGE_MODEL", "qwen3:8b")
 EMBED_MODEL = "nomic-embed-text"
 # Set explicitly: Ollama's default window silently truncates long prompts (whole
 # articles in multi-representation, many chunks in decomposition).
