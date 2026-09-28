@@ -211,8 +211,8 @@ most of it CRAG and Self-RAG, plus half an hour building the summary indexes.
 ## Testing
 
 ```bash
-pytest -q                  # 41 tests
-pytest -q -m "not gpu"     # 39 of them; skips the ColBERT/reranker model downloads
+pytest -q                  # 42 tests
+pytest -q -m "not gpu"     # 40 of them; skips the ColBERT/reranker model downloads
 ```
 
 The tests cover the splitter (size, overlap, exact offsets even when an article repeats itself),

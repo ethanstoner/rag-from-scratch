@@ -83,3 +83,14 @@ def test_report_reads_and_writes_results_dir(monkeypatch, tmp_path):
     assert list(seen["results"]) == ["baseline"] and len(seen["results"]["baseline"]) == 2
     assert (tmp_path / "results.md").read_text(encoding="utf-8") == "# stub\n"
     assert (tmp_path / "summary.json").exists()
+
+
+def test_list_and_eval_explain_a_missing_neural_extra(monkeypatch, capsys):
+    import importlib.util
+    real = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda m: None if m == "torch" else real(m))
+    main(["list"])
+    out = capsys.readouterr().out
+    assert len(out.splitlines()) == 18 and 'colbert                (needs the neural extra' in out
+    with pytest.raises(SystemExit, match="colbert, rerank needs the neural extra"):
+        main(["eval", "--per-type", "1"])

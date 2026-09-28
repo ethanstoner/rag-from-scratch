@@ -1,5 +1,6 @@
 """python -m ragfs  ask | eval | report | list"""
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -8,14 +9,34 @@ from ragfs.core.config import CHAT_MODEL, EMBED_MODEL, RESULTS_DIR, TOP_K
 from ragfs.techniques import registry
 
 
+NEURAL_HINT = 'needs the neural extra: pip install -e ".[neural]"'
+
+
+def unavailable(names):
+    """Techniques in `names` that can't load because torch/transformers aren't installed."""
+    if all(importlib.util.find_spec(m) for m in ("torch", "transformers")):
+        return []
+    return [n for n in names if n in registry.NEURAL]
+
+
+def require_neural(names):
+    if missing := unavailable(names):
+        sys.exit(f"{', '.join(missing)} {NEURAL_HINT}")
+
+
 def cmd_list(_):
+    missing = unavailable(registry.names())
     for n in registry.names():
+        if n in missing:
+            print(f"{n:22} ({NEURAL_HINT})")
+            continue
         t = registry.get(n)
         print(f"{n:22} lesson {t.lesson:6} {t.summary}")
 
 
 def cmd_ask(args):
     from ragfs.core.kit import build_kit
+    require_neural([args.technique])
     kit = build_kit()
     tech = registry.get(args.technique)(kit)
     kit.llm.reset_counters()
@@ -33,13 +54,14 @@ def cmd_eval(args):
     from ragfs.core.kit import build_kit
     from ragfs.eval.dataset import load_queries, stratified_sample
     from ragfs.eval.run import results_path, run_technique
+    names = args.techniques.split(",") if args.techniques else registry.names()
+    require_neural(names)
     llm = None
     if args.no_cache:
         from ragfs.core.llm import OllamaLLM
         llm = OllamaLLM(cache_dir=None)  # every call goes to the model: a true re-measurement
     kit = build_kit(llm=llm)
     queries = stratified_sample(load_queries(kit.docs), args.per_type, args.seed)
-    names = args.techniques.split(",") if args.techniques else registry.names()
     for n in names:
         print(f"== {n}", flush=True)
         tech = registry.get(n)(kit)
