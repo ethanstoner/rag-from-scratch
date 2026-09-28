@@ -172,29 +172,47 @@ MultiHop-RAG corpus (609 articles) ──► recursive splitter (1000/200, exact
 
 ## Getting started
 
-Requires Python 3.11+, [Ollama](https://ollama.com) with `gemma4` and `nomic-embed-text` pulled,
-and an NVIDIA GPU for the ColBERT and rerank techniques (the rest run anywhere Ollama does).
+Requires Python 3.11+ and [Ollama](https://ollama.com). The ColBERT and rerank techniques use
+PyTorch and run much faster on an NVIDIA GPU; everything else only needs Ollama.
 
 ```bash
-python -m venv venv && venv/Scripts/pip install -e ".[neural,dev]"
+git clone https://github.com/ethanstoner/rag-from-scratch && cd rag-from-scratch
+python -m venv venv
+source venv/bin/activate            # Windows: venv\Scripts\activate
+pip install -e ".[neural,dev]"      # or ".[dev]" to skip torch/transformers
+ollama pull gemma4 && ollama pull nomic-embed-text
+```
+
+On Windows, `pip install torch` gets a CPU-only build. For the GPU, install torch first with the
+command from [pytorch.org](https://pytorch.org/get-started/locally/).
+
+```bash
 python -m ragfs list                                        # the 18 techniques
 python -m ragfs ask -t rerank "Which company did The Verge and TechCrunch both cover in antitrust stories?"
+python -m ragfs eval --techniques baseline,hybrid --per-type 5 --results-dir temp/quick   # quick check
 python -m ragfs eval --per-type 75                          # full benchmark (resumable)
-python -m ragfs eval --techniques baseline,hybrid --per-type 5   # quick check
-python -m ragfs report && python -m ragfs plot
+python -m ragfs plot                                        # redraw results/deltas.png from summary.json
 python -m ragfs eval --no-cache --techniques baseline       # bypass the LLM cache to re-measure latency
 python -m ragfs report --results-dir path/to/copy           # rebuild tables from another set of .jsonl files
 ```
 
-The dataset downloads from Hugging Face on first use. Set `OLLAMA_HOST` if Ollama is not on the default
-host and port. On a 4090 the full 300-query × 18-technique run takes about 4 hours: 3.4 hours of queries,
+On first use the MultiHop-RAG files (about 12 MB) download from
+[Hugging Face](https://huggingface.co/datasets/yixuantt/MultiHopRAG) into `data/multihop/`, and the
+first command that needs the index embeds all 8,314 chunks through Ollama (cached in `.cache/`).
+Ollama is expected at `http://127.0.0.1:11434`; set `OLLAMA_HOST` if it runs elsewhere, and
+`RAGFS_CHAT_MODEL` to try a different generator.
+
+`eval` and `report` write `results.md` and `summary.json` into `--results-dir` (default `results/`).
+The per-query `.jsonl` files behind the published numbers are not committed, so run `report` on the
+default directory only after an `eval` there, or it will overwrite the published tables with empty
+ones. On a 4090 the full 300-query × 18-technique run takes about 4 hours: 3.4 hours of queries,
 most of it CRAG and Self-RAG, plus half an hour building the summary indexes.
 
 ## Testing
 
 ```bash
-venv/Scripts/python -m pytest -q            # 41 tests
-venv/Scripts/python -m pytest -q -m "not gpu"   # skip the ColBERT/reranker model downloads
+pytest -q                  # 41 tests
+pytest -q -m "not gpu"     # 39 of them; skips the ColBERT/reranker model downloads
 ```
 
 The tests cover the splitter (size, overlap, exact offsets even when an article repeats itself),
