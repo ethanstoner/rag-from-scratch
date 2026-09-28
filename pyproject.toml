@@ -1,8 +1,14 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ragfs"
 version = "0.1.0"
 description = "Eighteen RAG techniques built from scratch in plain Python and benchmarked on one dataset"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = ["numpy", "httpx", "scikit-learn", "beautifulsoup4"]
 
 [project.optional-dependencies]
